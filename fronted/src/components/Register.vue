@@ -41,6 +41,33 @@
               :disabled="loading"
             >
           </div>
+            <!-- Campo de CARGO -->
+<div class="form-group">
+  <label for="cargo">Cargo:</label>
+  <input
+    type="text"
+    id="cargo"
+    v-model="form.cargo"
+    class="form-control"
+    required
+    :disabled="loading"
+  />
+</div>
+
+<!-- Campo jefe inmediato como input numérico -->
+<div class="form-group">
+  <label for="id_jefe">ID del Jefe Inmediato:</label>
+  <input
+    type="number"
+    id="id_jefe"
+    v-model="form.id_jefe"
+    class="form-control"
+    placeholder="Ej. 2"
+    :disabled="loading"
+  />
+</div>
+
+
 
           <div class="form-group">
             <label for="contrasena">Contraseña:</label>
@@ -106,14 +133,18 @@ export default {
       form: {
         nombre: '',
         correo: '',
+        cargo: '',
+        id_jefe: null,
         contrasena: '',
         confirmarContrasena: ''
       },
+      usuariosExistentes: [],
       loading: false,
       error: null,
       success: null
     }
   },
+  
   computed: {
     isFormValid() {
       return this.form.nombre &&
@@ -128,10 +159,22 @@ export default {
     show(value) {
       if (value) {
         this.resetForm()
+        this.fetchUsuarios()
       }
     }
   },
   methods: {
+
+    async fetchUsuarios() {
+  try {
+    const response = await axios.get('/usuarios')
+    this.usuariosExistentes = response.data
+    console.log('Usuarios cargados:', this.usuariosExistentes) // <-- aquí
+  } catch (error) {
+    console.error('Error al cargar jefes:', error)
+  }
+},
+
     async handleRegister(event) {
       // Prevenir el comportamiento por defecto del formulario
       if (event) {
@@ -167,7 +210,11 @@ export default {
         const result = await this.$store.dispatch('register', {
           nombre: this.form.nombre,
           correo: this.form.correo,
-          contrasena: this.form.contrasena
+          contrasena: this.form.contrasena,
+          rol: 'usuario',      // Agrego explícitamente el rol fijo aquí
+          cargo: this.form.cargo,
+          id_jefe: this.form.id_jefe
+          
         })
 
         console.log('Resultado del registro:', result) // Para debugging
@@ -202,7 +249,9 @@ export default {
         nombre: '',
         correo: '',
         contrasena: '',
-        confirmarContrasena: ''
+        confirmarContrasena: '',
+        cargo: '',
+        id_jefe: null
       }
       this.error = null
       this.success = null

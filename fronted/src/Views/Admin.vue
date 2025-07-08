@@ -86,7 +86,59 @@
         </svg>
         Debug Data
       </button>
+
+      
+
+        <!-- Nuevo botón "Jerarquías" -->
+      <button 
+        class="btn btn-info" 
+        @click="verJerarquia"
+>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,6H13V11.5L17.25,14.21L16.5,15.53L11,12.5V6Z" />
+      </svg>
+      Jerarquías
+      </button>
+
+      <!-- Después del botón Jerarquías (dentro de div.admin-actions) -->
+<div v-if="mostrarJerarquias" style="margin-top: 20px;">
+  <label for="usuarioSelect">Selecciona un usuario para ver su jerarquía:</label>
+  <select id="usuarioSelect" v-model="usuarioSeleccionado" @change="cargarJerarquia" class="form-control" style="width: 300px; margin-bottom: 10px;">
+    <option disabled value="">-- Selecciona un usuario --</option>
+    <option v-for="usuario in usuariosDisponibles" :key="usuario.id" :value="usuario.id">
+      {{ usuario.nombre }} - {{ usuario.cargo || 'Sin cargo' }}
+    </option>
+  </select>
+
+  <div v-if="jerarquias.length > 0">
+    <h3>Jerarquía</h3>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nivel</th>
+          <th>Nombre</th>
+          <th>Cargo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="item in jerarquias" :key="item.nivel">
+          <td>{{ item.nivel }}</td>
+          <td>{{ item.nombre }}</td>
+          <td>{{ item.cargo }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div v-else>
+    <p>No hay jerarquía para mostrar.</p>
+  </div>
+</div>
+
+
+
     </div>
+
+
 
     <div v-if="error" class="alert alert-error">
       <svg viewBox="0 0 24 24" fill="currentColor">
@@ -182,7 +234,11 @@ export default {
       success: null,
       showRegisterModal: false,
       showDebug: false,
-      debugInfo: null
+      debugInfo: null,
+      usuarioSeleccionado: null,
+      usuariosDisponibles: [],
+      jerarquias: [],
+      mostrarJerarquias: false
     }
   },
   
@@ -198,6 +254,7 @@ export default {
   
   async mounted() {
     await this.loadUsers()
+    await this.cargarUsuariosDisponibles()  // nuevo método para dropdown
   },
   
   methods: {
@@ -283,6 +340,56 @@ export default {
         timestamp: new Date().toISOString()
       }
       console.log('🐛 Debug Info:', this.debugInfo)
+    },
+
+     async obtenerJerarquia(idUsuario) {
+    try {
+      const token = localStorage.getItem('token') // o donde guardes el token
+      const response = await this.$axios.get(`/jerarquia/${idUsuario}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      this.jerarquia = response.data
+    } catch (error) {
+      console.error('Error al obtener jerarquía:', error)
+    }
+  },
+
+   async cargarUsuariosDisponibles() {
+    try {
+      const response = await axios.get('/usuarios')
+      this.usuariosDisponibles = response.data
+    } catch (error) {
+      console.error('Error al cargar usuarios disponibles:', error)
+    }
+  },
+
+   async cargarJerarquia() {
+    if (!this.usuarioSeleccionado) {
+      this.jerarquias = []
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token') || ''  // si usas token de auth
+      const response = await axios.get(`/jerarquia/${this.usuarioSeleccionado}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      this.jerarquias = response.data
+    } catch (error) {
+      console.error('Error al obtener jerarquía:', error)
+      this.jerarquias = []
+    }
+  },
+
+  verJerarquia() {
+    // Mostrar el dropdown y limpiar selección
+    this.mostrarJerarquias = true
+    this.usuarioSeleccionado = ''
+    this.jerarquias = []
     }
   }
 }
