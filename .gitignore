@@ -1,0 +1,13 @@
+# Ignorar dependencias y compilaciones
+node_modules/
+dist/
+.env
+__pycache__/
+*.pyc
+*.log
+
+# VS Code
+.vscode/
+
+# Otros
+.DS_Store
